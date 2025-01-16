@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メルカリ利益計算式</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #e0f7e9;
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .buttons button:hover {
+            background-color: #45a049;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>メルカリ利益計算式</h1>
+        <form id="profitCalculator">
+            <label for="costPrice">仕入れ価格:</label>
+            <input type="number" id="costPrice" placeholder="1000" required>
+
+            <label for="sellingPrice">販売価格:</label>
+            <input type="number" id="sellingPrice" placeholder="2000" required>
+
+            <label for="shippingCost">送料:</label>
+            <input type="number" id="shippingCost" placeholder="500" required>
+
+            <label for="commissionRate">販売手数料率 (%):</label>
+            <input type="number" id="commissionRate" placeholder="10" required>
+
+            <label for="customsDuty">関税:</label>
+            <input type="number" id="customsDuty" placeholder="200" required>
+
+            <div class="buttons">
+                <button type="button" onclick="calculateProfit()">計算する</button>
+                <button type="reset">リセット</button>
+            </div>
+        </form>
+
+        <table>
+            <tr>
+                <th>項目</th>
+                <th>値</th>
+            </tr>
+            <tr>
+                <td>仕入れ価格</td>
+                <td id="displayCostPrice">-</td>
+            </tr>
+            <tr>
+                <td>販売価格</td>
+                <td id="displaySellingPrice">-</td>
+            </tr>
+            <tr>
+                <td>送料</td>
+                <td id="displayShippingCost">-</td>
+            </tr>
+            <tr>
+                <td>関税</td>
+                <td id="displayCustomsDuty">-</td>
+            </tr>
+            <tr>
+                <td>販売手数料</td>
+                <td id="displayCommission">-</td>
+            </tr>
+            <tr>
+                <td>手元に入る金額 (円)</td>
+                <td id="displayNetAmount">-</td>
+            </tr>
+            <tr>
+                <td>利益 (円)</td>
+                <td id="displayProfit">-</td>
+            </tr>
+            <tr>
+                <td>利益率 (%)</td>
+                <td id="displayProfitRate">-</td>
+            </tr>
+            <tr>
+                <td>利益 (ウォン)</td>
+                <td id="displayProfitWon">-</td>
+            </tr>
+            <tr>
+                <td>現在のレート (円→ウォン)</td>
+                <td id="displayExchangeRate">-</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        async function fetchExchangeRate() {
+            const response = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
+            const data = await response.json();
+            return data.rates.KRW;
+        }
+
+        async function calculateProfit() {
+            const costPrice = parseFloat(document.getElementById('costPrice').value);
+            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
+            const shippingCost = parseFloat(document.getElementById('shippingCost').value);
+            const commissionRate = parseFloat(document.getElementById('commissionRate').value);
+            const customsDuty = parseFloat(document.getElementById('customsDuty').value);
+            const exchangeRate = await fetchExchangeRate();
+
+            const commission = sellingPrice * (commissionRate / 100);
+            const netAmount = sellingPrice - shippingCost - commission - customsDuty;
+            const profit = netAmount - costPrice;
+            const profitRate = (profit / sellingPrice) * 100;
+            const profitWon = profit * exchangeRate;
+
+            document.getElementById('displayCostPrice').textContent = costPrice.toFixed(0);
+            document.getElementById('displaySellingPrice').textContent = sellingPrice.toFixed(0);
+            document.getElementById('displayShippingCost').textContent = shippingCost.toFixed(0);
+            document.getElementById('displayCustomsDuty').textContent = customsDuty.toFixed(0);
+            document.getElementById('displayCommission').textContent = commission.toFixed(0);
+            document.getElementById('displayNetAmount').textContent = netAmount.toFixed(0);
+            document.getElementById('displayProfit').textContent = profit.toFixed(0);
+            document.getElementById('displayProfitRate').textContent = profitRate.toFixed(2);
+            document.getElementById('displayProfitWon').textContent = profitWon.toFixed(2);
+            document.getElementById('displayExchangeRate').textContent = exchangeRate.toFixed(2);
+        }
+    </script>
+</body>
+</html>
