@@ -8,16 +8,19 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background-color: #ffe4e1;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #e0f7e9;
+            background-color: #fff0f5;
             border-radius: 8px;
+            border: 1px solid #ffc0cb;
         }
         h1 {
             text-align: center;
+            color: #db7093;
         }
         table {
             width: 100%;
@@ -25,11 +28,13 @@
             border-collapse: collapse;
         }
         table, th, td {
-            border: 1px solid #ccc;
+            border: 1px solid #ffc0cb;
         }
         th, td {
             padding: 8px;
             text-align: left;
+            background-color: #fffaf0;
+            color: #db7093;
         }
         .buttons {
             text-align: center;
@@ -39,20 +44,22 @@
             padding: 10px 20px;
             margin: 5px;
             border: none;
-            background-color: #4CAF50;
+            background-color: #db7093;
             color: white;
             border-radius: 4px;
             cursor: pointer;
         }
         .buttons button:hover {
-            background-color: #45a049;
+            background-color: #ff69b4;
         }
-        input[type="number"] {
+        input[type="number"], select {
             width: 100%;
             padding: 8px;
             margin-top: 10px;
-            border: 1px solid #ccc;
+            border: 1px solid #ffc0cb;
             border-radius: 4px;
+            background-color: #fffaf0;
+            color: #db7093;
         }
     </style>
 </head>
@@ -67,13 +74,17 @@
             <input type="number" id="sellingPrice" placeholder="2000" required>
 
             <label for="shippingCost">送料:</label>
-            <input type="number" id="shippingCost" placeholder="500" required>
+            <select id="shippingCost" required>
+                <option value="160">📮mini - 160円</option>
+                <option value="215">📮専用シール（3辺合計60cm以内） - 215円</option>
+                <option value="455">🏣中型サイズ（17×24×7） - 455円</option>
+                <option value="450">🐈‍⬛コンパクト450 - 450円</option>
+            </select>
+
+            <br>
 
             <label for="commissionRate">販売手数料率 (%):</label>
-            <input type="number" id="commissionRate" placeholder="10" required>
-
-            <label for="customsDuty">関税:</label>
-            <input type="number" id="customsDuty" placeholder="200" required>
+            <input type="number" id="commissionRate" value="10" placeholder="10" required>
 
             <div class="buttons">
                 <button type="button" onclick="calculateProfit()">計算する</button>
@@ -141,7 +152,8 @@
             const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
             const shippingCost = parseFloat(document.getElementById('shippingCost').value);
             const commissionRate = parseFloat(document.getElementById('commissionRate').value);
-            const customsDuty = parseFloat(document.getElementById('customsDuty').value);
+            //const customsDuty = parseFloat(document.getElementById('customsDuty').value);
+            const customsDuty = costPrice * 0.15;
             const exchangeRate = await fetchExchangeRate();
 
             const commission = sellingPrice * (commissionRate / 100);
