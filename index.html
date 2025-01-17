@@ -1,9 +1,12 @@
+from IPython.core.display import display, HTML
+
+html_content = """
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>メルカリ利益計算式</title>
+    <title>仕入れ判断</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -61,19 +64,37 @@
             background-color: #fffaf0;
             color: #db7093;
         }
+        .highlight {
+            font-weight: bold;
+            color: #b22222;
+        }
+        .result-text {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fffaf0;
+            border: 1px solid #ffc0cb;
+            border-radius: 4px;
+            color: #db7093;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>メルカリ利益計算式</h1>
+        <h1>仕入れ判断</h1>
         <form id="profitCalculator">
-            <label for="costPrice">仕入れ価格:</label>
-            <input type="number" id="costPrice" placeholder="1000" required>
+            <label for="sellingPrice">メルカリ販売価格（円）:</label>
+            <input type="number" id="sellingPrice" placeholder="0" required>
 
-            <label for="sellingPrice">販売価格:</label>
-            <input type="number" id="sellingPrice" placeholder="2000" required>
+            <br><br>
 
-            <label for="shippingCost">送料:</label>
+            <label for="commissionRate">メルカリ手数料率 (%):</label>
+            <input type="number" id="commissionRate" value="10" placeholder="10" required>
+
+            <br><br>
+
+            <label for="shippingCost">メルカリ送料（円）:</label>
             <select id="shippingCost" required>
                 <option value="160">📮mini - 160円</option>
                 <option value="215">📮専用シール（3辺合計60cm以内） - 215円</option>
@@ -81,10 +102,39 @@
                 <option value="450">🐈‍⬛コンパクト450 - 450円</option>
             </select>
 
-            <br>
+            <br><br>
 
-            <label for="commissionRate">販売手数料率 (%):</label>
-            <input type="number" id="commissionRate" value="10" placeholder="10" required>
+            <label>仕入れ値:</label>
+            <div>
+                <input type="radio" id="costPriceJPY" name="costPriceCurrency" value="JPY" checked>
+                <label for="costPriceJPY">円</label>
+                <input type="radio" id="costPriceKRW" name="costPriceCurrency" value="KRW">
+                <label for="costPriceKRW">ウォン</label>
+            </div>
+
+            <input type="number" id="costPrice" placeholder="0" required>
+
+            <br><br>
+
+            <label>仕入れ時送料:</label>
+            <div>
+                <input type="radio" id="shippingCostJPY" name="shippingCostCurrency" value="JPY" checked>
+                <label for="shippingCostJPY">円</label>
+                <input type="radio" id="shippingCostKRW" name="shippingCostCurrency" value="KRW">
+                <label for="shippingCostKRW">ウォン</label>
+            </div>
+
+            <input type="number" id="purchaseShippingCost" placeholder="0" required>
+
+            <br><br>
+
+            <label>関税:</label>
+            <div>
+                <input type="radio" id="customsDutyTrue" name="customsDuty" value="True" checked>
+                <label for="customsDutyTrue">あり</label>
+                <input type="radio" id="customsDutyFalse" name="customsDuty" value="False">
+                <label for="customsDutyFalse">なし</label>
+            </div>
 
             <div class="buttons">
                 <button type="button" onclick="calculateProfit()">計算する</button>
@@ -93,86 +143,87 @@
         </form>
 
         <table>
-            <tr>
-                <th>項目</th>
-                <th>値</th>
-            </tr>
-            <tr>
-                <td>仕入れ価格</td>
-                <td id="displayCostPrice">-</td>
-            </tr>
-            <tr>
-                <td>販売価格</td>
-                <td id="displaySellingPrice">-</td>
-            </tr>
-            <tr>
-                <td>送料</td>
-                <td id="displayShippingCost">-</td>
-            </tr>
-            <tr>
-                <td>関税</td>
-                <td id="displayCustomsDuty">-</td>
-            </tr>
-            <tr>
-                <td>販売手数料</td>
-                <td id="displayCommission">-</td>
-            </tr>
-            <tr>
-                <td>手元に入る金額 (円)</td>
-                <td id="displayNetAmount">-</td>
-            </tr>
-            <tr>
-                <td>利益 (円)</td>
-                <td id="displayProfit">-</td>
-            </tr>
-            <tr>
-                <td>利益率 (%)</td>
-                <td id="displayProfitRate">-</td>
-            </tr>
-            <tr>
-                <td>利益 (ウォン)</td>
-                <td id="displayProfitWon">-</td>
-            </tr>
-            <tr>
-                <td>現在のレート (円→ウォン)</td>
-                <td id="displayExchangeRate">-</td>
-            </tr>
+            <tr><th>項目</th><th>値</th></tr>
+            <tr><td>メルカリ販売価格</td><td id="displaySellingPrice">-</td></tr>
+            <tr><td>メルカリ手数料</td><td id="displayCommission">-</td></tr>
+            <tr><td>メルカリ送料</td><td id="displayShippingCost">-</td></tr>
+            <tr><td>仕入れ値 (円)</td><td id="displayCostPriceJPY">-</td></tr>
+            <tr><td>仕入れ値 (ウォン)</td><td id="displayCostPriceKRW">-</td></tr>
+            <tr><td>仕入れ時送料</td><td id="displayPurchaseShippingCost">-</td></tr>
+            <tr><td>関税</td><td id="displayCustomsDuty">-</td></tr>
+            <tr><td>利益 (円)</td><td id="displayProfit" class="highlight">-</td></tr>
+            <tr><td>利益率 (%)</td><td id="displayProfitRate">-</td></tr>
         </table>
+
+        <div id="resultText" class="result-text"></div>
     </div>
 
     <script>
         async function fetchExchangeRate() {
-            const response = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
+            const response = await fetch('https://api.exchangerate-api.com/v4/latest/KRW');
             const data = await response.json();
-            return data.rates.KRW;
+            return data.rates.JPY;
         }
 
         async function calculateProfit() {
-            const costPrice = parseFloat(document.getElementById('costPrice').value);
-            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
-            const shippingCost = parseFloat(document.getElementById('shippingCost').value);
-            const commissionRate = parseFloat(document.getElementById('commissionRate').value);
-            //const customsDuty = parseFloat(document.getElementById('customsDuty').value);
-            const customsDuty = costPrice * 0.15;
             const exchangeRate = await fetchExchangeRate();
+            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
+            const commissionRate = parseFloat(document.getElementById('commissionRate').value) || 0;
+            const shippingCost = parseFloat(document.getElementById('shippingCost').value) || 0;
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+            const purchaseShippingCost = parseFloat(document.getElementById('purchaseShippingCost').value) || 0;
+
+            // 通貨選択
+            const costPriceCurrency = document.querySelector('input[name="costPriceCurrency"]:checked').value;
+            const costPriceInJPY = costPriceCurrency === "JPY"
+                ? costPrice
+                : costPrice * exchangeRate;
+
+            const shippingCostCurrency = document.querySelector('input[name="shippingCostCurrency"]:checked').value;
+            const purchaseShippingCostInJPY = shippingCostCurrency === "JPY"
+                ? purchaseShippingCost
+                : purchaseShippingCost * exchangeRate;
+
+            // 関税有無の選択
+            const customsDuty = document.querySelector('input[name="customsDuty"]:checked').value;
+            const customsDutyPrice = customsDuty === "True"
+                ? costPriceInJPY * 0.15
+                : 0;
 
             const commission = sellingPrice * (commissionRate / 100);
-            const netAmount = sellingPrice - shippingCost - commission - customsDuty;
-            const profit = netAmount - costPrice;
+            const profit = sellingPrice - commission - shippingCost - costPriceInJPY - purchaseShippingCostInJPY - customsDutyPrice;
             const profitRate = (profit / sellingPrice) * 100;
-            const profitWon = profit * exchangeRate;
 
-            document.getElementById('displayCostPrice').textContent = costPrice.toFixed(0);
             document.getElementById('displaySellingPrice').textContent = sellingPrice.toFixed(0);
             document.getElementById('displayShippingCost').textContent = shippingCost.toFixed(0);
-            document.getElementById('displayCustomsDuty').textContent = customsDuty.toFixed(0);
+            document.getElementById('displayCustomsDuty').textContent = customsDutyPrice.toFixed(0);
             document.getElementById('displayCommission').textContent = commission.toFixed(0);
-            document.getElementById('displayNetAmount').textContent = netAmount.toFixed(0);
+            document.getElementById('displayCostPriceJPY').textContent = costPriceInJPY.toFixed(0);
+            document.getElementById('displayCostPriceKRW').textContent = (costPriceInJPY / exchangeRate).toFixed(0);
+            document.getElementById('displayPurchaseShippingCost').textContent = purchaseShippingCostInJPY.toFixed(0);
             document.getElementById('displayProfit').textContent = profit.toFixed(0);
             document.getElementById('displayProfitRate').textContent = profitRate.toFixed(2);
-            document.getElementById('displayProfitWon').textContent = profitWon.toFixed(2);
-            document.getElementById('displayExchangeRate').textContent = exchangeRate.toFixed(2);
+
+            // 結果をresultTextに表示
+            const resultText = `メルカリ販売価格：${sellingPrice.toFixed(0)}円
+メルカリ手数料：${commission.toFixed(0)}円
+メルカリ送料：${shippingCost.toFixed(0)}円
+仕入れ値：${costPriceInJPY.toFixed(0)}円
+仕入れ時送料：${purchaseShippingCostInJPY.toFixed(0)}円
+関税：${customsDutyPrice.toFixed(0)}円
+＝利益額：${profit.toFixed(0)}円
+`;
+            document.getElementById('resultText').textContent = resultText;
         }
     </script>
 </body>
 </html>
+
+
+"""
+# HTMLファイルとして保存
+file_name = "index.html"
+with open(file_name, "w") as f:
+    f.write(html_content)
+
+display(HTML(html_content))
