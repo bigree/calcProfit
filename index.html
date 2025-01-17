@@ -1,6 +1,3 @@
-from IPython.core.display import display, HTML
-
-html_content = """
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -218,12 +215,3 @@ html_content = """
     </script>
 </body>
 </html>
-
-
-"""
-# HTMLファイルとして保存
-file_name = "index.html"
-with open(file_name, "w") as f:
-    f.write(html_content)
-
-display(HTML(html_content))
