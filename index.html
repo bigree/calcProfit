@@ -93,11 +93,15 @@
 
             <label for="shippingCost">メルカリ送料（円）:</label>
             <select id="shippingCost" required>
-                <option value="160">📮mini - 160円</option>
-                <option value="215">📮専用シール（3辺合計60cm以内） - 215円</option>
-                <option value="455">🏣中型サイズ（17×24×7） - 455円</option>
-                <option value="450">🐈‍⬛コンパクト450 - 450円</option>
+                <option value="160">📮¥160 ゆうパケットポストmini（要専用封筒）</option>
+                <option value="215">📮¥215 ゆうパケットポスト（要専用シール/要専用箱）</option>
+                <option value="455">🏣¥455 ゆうパケットプラス（要専用箱）</option>
+                <option value="210">🐈‍⬛¥210 ネコポス（ポスト受取サイズ）</option>
+                <option value="450">🐈‍⬛¥450 宅急便コンパクト</option>
+                <option value="None">手入力する</option>
             </select>
+
+            <input type="number" id="shippingCostHand" placeholder="0" style="display: none;" required>
 
             <br><br>
 
@@ -156,6 +160,26 @@
     </div>
 
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const shippingCostSelect = document.getElementById('shippingCost');
+            const shippingCostHandInput = document.getElementById('shippingCostHand');
+
+            // 初期状態では非表示
+            shippingCostHandInput.style.display = 'none';
+
+            // 送料選択時の動作
+            shippingCostSelect.addEventListener('change', function () {
+                if (shippingCostSelect.value === "None") {
+                    shippingCostHandInput.style.display = 'block'; // 表示
+                    shippingCostHandInput.required = true; // 必須に設定
+                } else {
+                    shippingCostHandInput.style.display = 'none'; // 非表示
+                    shippingCostHandInput.required = false; // 必須を解除
+                    shippingCostHandInput.value = ""; // 入力値をリセット
+                }
+            });
+        });
+
         async function fetchExchangeRate() {
             const response = await fetch('https://api.exchangerate-api.com/v4/latest/KRW');
             const data = await response.json();
@@ -166,7 +190,15 @@
             const exchangeRate = await fetchExchangeRate();
             const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
             const commissionRate = parseFloat(document.getElementById('commissionRate').value) || 0;
-            const shippingCost = parseFloat(document.getElementById('shippingCost').value) || 0;
+
+            let shippingCost = parseFloat(document.getElementById('shippingCost').value) || 0;
+            const shippingCostHand = parseFloat(document.getElementById('shippingCostHand').value) || 0;
+
+            // "手入力する" が選択されている場合、shippingCost を shippingCostHand の値に変更
+            if (document.getElementById('shippingCost').value === "None") {
+                shippingCost = shippingCostHand;
+            }
+
             const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
             const purchaseShippingCost = parseFloat(document.getElementById('purchaseShippingCost').value) || 0;
 
